@@ -48,6 +48,7 @@ const DEV_PROXY_ORIGIN = "/__fatec_proxy";
 const OFFICIAL_ORIGIN = "https://www.fatecmaua.com.br";
 const DEV_PROXY_API_ORIGIN = "/__fatec_proxy/wp-json/wp/v2";
 const OFFICIAL_API_ORIGIN = "https://www.fatecmaua.com.br/wp-json/wp/v2";
+const APP_PROXY_ENDPOINT = "/api/fatec-proxy?url=";
 
 const DEFAULT_BASE_URL =
   import.meta.env.VITE_FATEC_NEWS_BASE_URL ??
@@ -55,7 +56,20 @@ const DEFAULT_BASE_URL =
 
 export class BrowserNewsFetcher implements NewsFetcher {
   async get(url: string, timeoutMs: number): Promise<string> {
-    return this.fetchText(url, timeoutMs);
+    const requestUrl = this.resolveRequestUrl(url);
+    return this.fetchText(requestUrl, timeoutMs);
+  }
+
+  private resolveRequestUrl(url: string): string {
+    if (import.meta.env.DEV) {
+      return url;
+    }
+
+    if (url.startsWith(OFFICIAL_ORIGIN)) {
+      return `${APP_PROXY_ENDPOINT}${encodeURIComponent(url)}`;
+    }
+
+    return url;
   }
 
   private async fetchText(url: string, timeoutMs: number): Promise<string> {
@@ -444,7 +458,7 @@ export class FatecNewsScraper {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+        .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
 
