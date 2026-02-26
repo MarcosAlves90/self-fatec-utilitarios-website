@@ -232,12 +232,10 @@ const News = () => {
                 <Card key={article.link} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <CardTitle className="text-lg leading-snug">{article.title}</CardTitle>
-                    {formatDate(article.publishedAt) ? (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        <span>{formatDate(article.publishedAt)}</span>
-                      </div>
-                    ) : null}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      <span>{formatDate(article.publishedAt) ?? "Data não informada"}</span>
+                    </div>
                     <CardDescription className="break-all">{article.link}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
