@@ -3,11 +3,21 @@ import { GradeCalculator } from "@/components/GradeCalculator";
 import { RequiredScoreCalculator } from "@/components/RequiredScoreCalculator";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 import { Calculator, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-subtle">
+      <SEO
+        title="Calculadora de Média"
+        description="Calcule médias, veja seu status de aprovação e descubra a nota necessária para alcançar seus objetivos acadêmicos na Fatec Mauá."
+        keywords="calculadora de média, Fatec Mauá, notas, aprovação, nota necessária"
+        canonicalPath="/"
+        type="website"
+      />
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
@@ -20,6 +30,12 @@ const Index = () => {
               Calcule suas médias, verifique seu status de aprovação e descubra 
               qual nota você precisa para atingir seus objetivos acadêmicos.
             </p>
+
+            <div className="mt-5">
+              <Button asChild variant="outline">
+                <Link to="/noticias">Ver notícias da Fatec Mauá</Link>
+              </Button>
+            </div>
           </div>
 
           <Tabs defaultValue="calculator" className="w-full">

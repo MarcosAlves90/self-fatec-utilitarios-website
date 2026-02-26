@@ -9,7 +9,7 @@ export function Footer() {
             Feito com <Heart className="h-4 w-4 text-primary fill-primary" /> para estudantes da Fatec
           </p>
           <p className="text-xs mt-1">
-            © {new Date().getFullYear()} Calculadora de Média - Fatec Mauá
+            © {new Date().getFullYear()} Utilitários Fatec Mauá
           </p>
         </div>
       </div>

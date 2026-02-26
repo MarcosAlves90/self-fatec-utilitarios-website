@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/__fatec_proxy": {
+        target: "https://www.fatecmaua.com.br",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (pathValue) => pathValue.replace(/^\/__fatec_proxy/, ""),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
