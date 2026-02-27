@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ExternalLink, Loader2, Newspaper } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -69,7 +69,9 @@ const buildPaginationTokens = (currentPage: number, totalPages: number): Paginat
 };
 
 const News = () => {
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialPage = parseInt(searchParams.get("page") || "1", 10) || 1;
+  const [currentPage, setCurrentPage] = useState<number>(initialPage);
   const isMobile = useIsMobile();
 
   const {
@@ -95,6 +97,11 @@ const News = () => {
   const goToPage = (page: number) => {
     const safePage = Math.max(1, Math.min(totalPages, page));
     setCurrentPage(safePage);
+    setSearchParams((prev: URLSearchParams) => {
+      const params = new URLSearchParams(prev);
+      params.set("page", safePage.toString());
+      return params;
+    });
   };
 
   const renderPagination = () => (
@@ -261,8 +268,7 @@ const News = () => {
                         </p>
 
                         <Button asChild variant="outline">
-                          <Link to={`/noticias/${scraper.buildArticleSlug(article.link)}`}>
-                            Abrir notícia
+                          <Link to={`/noticias/${scraper.buildArticleSlug(article.link)}?page=${currentPage}`}>                            Abrir notícia
                             <ExternalLink className="h-4 w-4" />
                           </Link>
                         </Button>

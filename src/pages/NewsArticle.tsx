@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, ExternalLink, Newspaper } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -52,6 +52,8 @@ const NewsArticle = () => {
         .slice(0, 160)
     : "Leitura completa de uma notícia oficial da Fatec Mauá.";
 
+  const location = useLocation();
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-subtle">
       <SEO
@@ -67,7 +69,7 @@ const NewsArticle = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <Button asChild variant="ghost" className="-ml-2">
-              <Link to="/noticias">
+              <Link to={`/noticias${location.search}`}> 
                 <ArrowLeft className="h-4 w-4" />
                 Voltar para notícias
               </Link>
