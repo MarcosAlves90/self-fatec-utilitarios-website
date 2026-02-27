@@ -2,9 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, ExternalLink, Newspaper } from "lucide-react";
 import { Link, useParams, useLocation } from "react-router-dom";
 
-import { ArinterNewsScraper } from "@/utils/arinterNewsScraper";
-import { FatecNewsScraper } from "@/utils/fatecNewsScraper";
-import { NewsSource } from "./News";
+import { NewsSource, createScraper } from "@/utils/newsScraperFactory";
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -31,13 +29,11 @@ const NewsArticle = () => {
   const query = new URLSearchParams(location.search);
   const source = (query.get("source") === "arinter" ? "arinter" : "fatec") as NewsSource;
 
-  const scraper = source === "arinter" ? new ArinterNewsScraper() : new FatecNewsScraper();
-
   const sourceUrl = (() => {
     if (!slug) return "";
-
     try {
-      return scraper.buildArticleUrlFromSlug(slug);
+      // assume slug corresponds to path after host
+      return `${source === "arinter" ? "https://arinter.cps.sp.gov.br" : "https://www.fatecmaua.com.br"}/${slug}/`;
     } catch {
       return "";
     }
@@ -45,7 +41,25 @@ const NewsArticle = () => {
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["news-article", source, sourceUrl],
-    queryFn: () => scraper.scrapeArticle(sourceUrl),
+    queryFn: async () => {
+      if (import.meta.env.DEV) {
+        return createScraper(source).scrapeArticle(sourceUrl);
+      }
+      const resp = await fetch(
+        `/api/news?url=${encodeURIComponent(sourceUrl)}&source=${source}`,
+      );
+      const text = await resp.text();
+      if (!resp.ok) {
+        console.warn(`API article error: ${text}`);
+        return createScraper(source).scrapeArticle(sourceUrl);
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        console.warn("API returned invalid JSON for article, falling back", text);
+        return createScraper(source).scrapeArticle(sourceUrl);
+      }
+    },
     enabled: Boolean(sourceUrl),
     staleTime: 1000 * 60 * 10,
   });

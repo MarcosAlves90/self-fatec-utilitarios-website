@@ -98,6 +98,8 @@ export class BrowserNewsFetcher implements NewsFetcher {
   }
 }
 
+import DOMParserImpl from "./domParser";
+
 export class FatecNewsScraper {
   private readonly articleDateCache = new Map<string, string | undefined>();
 
@@ -124,7 +126,7 @@ export class FatecNewsScraper {
     const fetchUrl = this.resolveFetchUrlForArticle(normalizedSourceUrl);
 
     const html = await this.fetcher.get(fetchUrl, 15000);
-    const doc = new DOMParser().parseFromString(html, "text/html");
+    const doc = new DOMParserImpl().parseFromString(html, "text/html");
 
     const title = this.extractText(doc.querySelector("h1.entry-title, h1"));
     const publishedAt = this.extractPublishedDate(doc);
@@ -222,9 +224,9 @@ export class FatecNewsScraper {
 
   private async scrapePageFromUrl(url: string): Promise<NewsPageData> {
     const html = await this.fetcher.get(url, 15000);
-    const doc = new DOMParser().parseFromString(html, "text/html");
+    const doc = new DOMParserImpl().parseFromString(html, "text/html");
 
-    const articleNodes = Array.from(doc.querySelectorAll("article"));
+    const articleNodes = Array.from(doc.querySelectorAll("article")) as Element[];
     const articles = articleNodes
       .map((articleNode) => this.parseArticle(articleNode))
       .filter((article): article is NewsArticle => Boolean(article));
@@ -303,7 +305,7 @@ export class FatecNewsScraper {
       const normalizedSourceUrl = this.normalizeSourceUrl(articleUrl);
       const fetchUrl = this.resolveFetchUrlForArticle(normalizedSourceUrl);
       const html = await this.fetcher.get(fetchUrl, 10000);
-      const doc = new DOMParser().parseFromString(html, "text/html");
+      const doc = new DOMParserImpl().parseFromString(html, "text/html");
 
       return this.extractPublishedDate(doc);
     } catch {
@@ -319,7 +321,7 @@ export class FatecNewsScraper {
       const normalizedSourceUrl = this.normalizeSourceUrl(articleUrl);
       const fetchUrl = this.resolveFetchUrlForArticle(normalizedSourceUrl);
       const html = await this.fetcher.get(fetchUrl, 10000);
-      const doc = new DOMParser().parseFromString(html, "text/html");
+      const doc = new DOMParserImpl().parseFromString(html, "text/html");
 
       // procurar primeiro <img> dentro do conteúdo da notícia, similar ao
       // que já fazemos quando sanitizamos o conteúdo completo.

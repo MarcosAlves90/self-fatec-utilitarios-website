@@ -1,5 +1,7 @@
 import { NewsArticle, NewsPageResult, NewsFetcher } from "./fatecNewsScraper";
 
+import DOMParserImpl from "./domParser";
+
 // base URL configurable via env; in dev we proxy through vite server
 const OFFICIAL_ORIGIN = "https://arinter.cps.sp.gov.br";
 const DEV_PROXY_BASE_URL = "/__arinter_proxy";
@@ -9,6 +11,7 @@ const DEFAULT_BASE_URL =
   (import.meta.env.DEV ? DEV_PROXY_BASE_URL : OFFICIAL_ORIGIN);
 
 export class ArinterNewsScraper {
+  // reuse DOMParser polyfill from fatec scraper if available
   constructor(
     private readonly fetcher: NewsFetcher = new (class implements NewsFetcher {
       async get(url: string, timeoutMs: number): Promise<string> {
@@ -34,7 +37,7 @@ export class ArinterNewsScraper {
     const url = this.buildPageUrl(safePage);
     const fetchUrl = this.resolveFetchUrl(url);
     const html = await this.fetcher.get(fetchUrl, 15000);
-    const doc = new DOMParser().parseFromString(html, "text/html");
+    const doc = new DOMParserImpl().parseFromString(html, "text/html");
 
     const items = Array.from(doc.querySelectorAll(".listagem-posts-item"));
     const articles = items
@@ -50,7 +53,7 @@ export class ArinterNewsScraper {
     const normalized = this.normalizeSourceUrl(sourceUrl);
     const fetchUrl = this.resolveFetchUrlForArticle(normalized);
     const html = await this.fetcher.get(fetchUrl, 15000);
-    const doc = new DOMParser().parseFromString(html, "text/html");
+    const doc = new DOMParserImpl().parseFromString(html, "text/html");
 
     const title = doc.querySelector("h1.title-interna")?.textContent?.trim() || "";
     const publishedAt =

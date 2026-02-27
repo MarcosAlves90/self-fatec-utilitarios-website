@@ -3,10 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ExternalLink, Loader2, Newspaper } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { ArinterNewsScraper } from "@/utils/arinterNewsScraper";
-import { FatecNewsScraper } from "@/utils/fatecNewsScraper";
-
-export type NewsSource = "fatec" | "arinter";
+import { NewsSource, createScraper } from "@/utils/newsScraperFactory";
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -25,10 +22,7 @@ import {
 } from "@/components/ui/pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// helper that returns a new scraper instance for chosen source
-const createScraper = (source: NewsSource) => {
-  return source === "arinter" ? new ArinterNewsScraper() : new FatecNewsScraper();
-};
+// helper provided by newsScraperFactory; imported above
 
 const formatDate = (value?: string): string | null => {
   if (!value) return null;
@@ -102,7 +96,28 @@ const News = () => {
     error,
   } = useQuery({
     queryKey: ["news-page", source, currentPage],
-    queryFn: () => createScraper(source).scrapePage(currentPage),
+    queryFn: async () => {
+      // in development or if API fails, fall back to local scraper
+      if (import.meta.env.DEV) {
+        return createScraper(source).scrapePage(currentPage);
+      }
+
+      const resp = await fetch(
+        `/api/news?page=${currentPage}&source=${source}`,
+      );
+      const text = await resp.text();
+      if (!resp.ok) {
+        // include body for debugging and try fallback
+        console.warn(`API page error: ${text}`);
+        return createScraper(source).scrapePage(currentPage);
+      }
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        console.warn("API returned invalid JSON, falling back to scraper", text);
+        return createScraper(source).scrapePage(currentPage);
+      }
+    },
     staleTime: 1000 * 60 * 5,
     placeholderData: (previousData) => previousData,
   });
@@ -242,7 +257,7 @@ const News = () => {
             </Card>
           ) : null}
 
-          {isLoading ? (
+          {(isLoading || isFetching) ? (
             <section className="space-y-4">
               {Array.from({ length: 5 }).map((_, index) => (
                 <Card key={`skeleton-${index}`}> 
@@ -319,12 +334,6 @@ const News = () => {
 
           {!isLoading && !isError && data ? renderPagination() : null}
 
-          {!isLoading && isFetching ? (
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground" role="status">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Carregando notícias da página {currentPage}...</span>
-            </div>
-          ) : null}
         </div>
       </main>
 
