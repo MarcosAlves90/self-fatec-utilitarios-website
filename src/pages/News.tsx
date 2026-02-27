@@ -201,15 +201,20 @@ const News = () => {
           {isLoading ? (
             <section className="space-y-4">
               {Array.from({ length: 5 }).map((_, index) => (
-                <Card key={`skeleton-${index}`}>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-4/5" />
-                    <Skeleton className="h-4 w-2/5" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-11/12" />
-                  </CardContent>
+                <Card key={`skeleton-${index}`}> 
+                  <div className="flex flex-col md:flex-row">
+                    <Skeleton className="h-40 w-full md:w-48 rounded-t-md md:rounded-l-md md:rounded-tr-none" />
+                    <div className="flex-1">
+                      <CardHeader>
+                        <Skeleton className="h-6 w-4/5" />
+                        <Skeleton className="h-4 w-2/5" />
+                      </CardHeader>
+                      <CardContent>
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-11/12" />
+                      </CardContent>
+                    </div>
+                  </div>
                 </Card>
               ))}
             </section>
@@ -230,26 +235,40 @@ const News = () => {
             <section className="grid grid-cols-1 gap-4">
               {data.articles.map((article) => (
                 <Card key={article.link} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="text-lg leading-snug">{article.title}</CardTitle>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      <span>{formatDate(article.publishedAt) ?? "Data não informada"}</span>
-                    </div>
-                    <CardDescription className="break-all">{article.link}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      {article.description || "Sem descrição disponível para este artigo."}
-                    </p>
+                  <div className="flex flex-col md:flex-row">
+                    {/* exibe imagem se disponível, mantendo responsividade */}
+                    {article.imageUrl ? (
+                      <div className="w-full h-40 md:h-auto md:w-48 overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
+                        <img
+                          src={article.imageUrl}
+                          alt={article.title}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    ) : null}
 
-                    <Button asChild variant="outline">
-                      <Link to={`/noticias/${scraper.buildArticleSlug(article.link)}`}>
-                        Abrir notícia
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardContent>
+                    <div className="flex-1">
+                      <CardHeader>
+                        <CardTitle className="text-lg leading-snug">{article.title}</CardTitle>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          <span>{formatDate(article.publishedAt) ?? "Data não informada"}</span>
+                        </div>
+                          </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          {article.description || "Sem descrição disponível para este artigo."}
+                        </p>
+
+                        <Button asChild variant="outline">
+                          <Link to={`/noticias/${scraper.buildArticleSlug(article.link)}`}>
+                            Abrir notícia
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </div>
+                  </div>
                 </Card>
               ))}
             </section>

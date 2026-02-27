@@ -10,6 +10,11 @@ export interface NewsArticle {
   title: string;
   link: string;
   description: string;
+  /**
+   * URL da imagem em destaque que aparece no card da listagem. Nem todas as
+   * notícias possuem imagem, então este campo é opcional.
+   */
+  imageUrl?: string;
   publishedAt?: string;
   postId?: number;
 }
@@ -105,10 +110,10 @@ export class FatecNewsScraper {
     const safePage = Math.max(1, Math.floor(page));
     const url = this.buildPageUrl(safePage);
     const pageData = await this.scrapePageFromUrl(url);
-    const articlesWithDates = await this.enrichArticlesWithPublishedDate(pageData.articles);
+    const enriched = await this.enrichArticles(pageData.articles);
 
     return {
-      articles: articlesWithDates,
+      articles: enriched,
       currentPage: safePage,
       detectedTotalPages: pageData.detectedTotalPages,
     };
@@ -241,33 +246,56 @@ export class FatecNewsScraper {
       undefined;
     const postId = this.extractPostId(articleElement);
 
+    // tente extrair a primeira imagem encontrada dentro do elemento. muitas vezes
+    // o WordPress coloca uma figura com `img` ou uma thumbnail no próprio
+    // <article>. usamos URL absoluta para evitar caminhos relativos.
+    let imageUrl: string | undefined;
+    const imgEl = articleElement.querySelector("img");
+    if (imgEl?.getAttribute("src")) {
+      try {
+        imageUrl = new URL(imgEl.getAttribute("src") || "", OFFICIAL_ORIGIN).toString();
+      } catch {
+        imageUrl = imgEl.getAttribute("src") || undefined;
+      }
+    }
+
     if (!title || !link) {
       return null;
     }
 
-    return { title, link, description, publishedAt, postId };
+    return { title, link, description, publishedAt, postId, imageUrl };
   }
 
-  private async enrichArticlesWithPublishedDate(articles: NewsArticle[]): Promise<NewsArticle[]> {
-    const dateTasks = articles.map(async (article) => {
-      if (article.publishedAt) {
-        return article;
+  /**
+   * Preenche campos adicionais que não são fornecidos pela listagem da página.
+   * Atualmente recupera a data e a imagem quando faltantes.
+   */
+  private async enrichArticles(articles: NewsArticle[]): Promise<NewsArticle[]> {
+    const tasks = articles.map(async (article) => {
+      let publishedAt = article.publishedAt;
+      let imageUrl = article.imageUrl;
+
+      if (publishedAt === undefined) {
+        const cachedDate = this.articleDateCache.get(article.link);
+        if (cachedDate !== undefined) {
+          publishedAt = cachedDate;
+        } else {
+          publishedAt =
+            (article.postId ? await this.fetchPublishedDateByPostId(article.postId) : undefined) ||
+            (await this.fetchPublishedDateFromArticle(article.link));
+          this.articleDateCache.set(article.link, publishedAt);
+        }
       }
 
-      const cachedDate = this.articleDateCache.get(article.link);
-      if (cachedDate !== undefined) {
-        return { ...article, publishedAt: cachedDate };
+      if (!imageUrl) {
+        // tentar extrair imagem diretamente do conteúdo do artigo.
+        imageUrl = await this.fetchImageUrlFromArticle(article.link);
       }
 
-      const fetchedDate =
-        (article.postId ? await this.fetchPublishedDateByPostId(article.postId) : undefined) ||
-        (await this.fetchPublishedDateFromArticle(article.link));
-
-      this.articleDateCache.set(article.link, fetchedDate);
-      return { ...article, publishedAt: fetchedDate };
+      return { ...article, publishedAt, imageUrl };
     });
 
-    return Promise.all(dateTasks);
+    return Promise.all(tasks);
   }
 
   private async fetchPublishedDateFromArticle(articleUrl: string): Promise<string | undefined> {
@@ -278,6 +306,40 @@ export class FatecNewsScraper {
       const doc = new DOMParser().parseFromString(html, "text/html");
 
       return this.extractPublishedDate(doc);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Tenta obter a primeira URL de imagem relevante dentro do artigo fornecido.
+   */
+  private async fetchImageUrlFromArticle(articleUrl: string): Promise<string | undefined> {
+    try {
+      const normalizedSourceUrl = this.normalizeSourceUrl(articleUrl);
+      const fetchUrl = this.resolveFetchUrlForArticle(normalizedSourceUrl);
+      const html = await this.fetcher.get(fetchUrl, 10000);
+      const doc = new DOMParser().parseFromString(html, "text/html");
+
+      // procurar primeiro <img> dentro do conteúdo da notícia, similar ao
+      // que já fazemos quando sanitizamos o conteúdo completo.
+      const contentRoot =
+        doc.querySelector("article .entry-content") ||
+        doc.querySelector("article .post-content") ||
+        doc.querySelector(".entry-content") ||
+        doc.querySelector(".post-content") ||
+        doc.body;
+
+      const img = contentRoot?.querySelector("img[src]") as HTMLImageElement | null;
+      if (img && img.src) {
+        try {
+          return new URL(img.src, OFFICIAL_ORIGIN).toString();
+        } catch {
+          return img.src;
+        }
+      }
+
+      return undefined;
     } catch {
       return undefined;
     }
