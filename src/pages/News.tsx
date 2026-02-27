@@ -1,7 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ExternalLink, Loader2, Newspaper } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+
+import { ArinterNewsScraper } from "@/utils/arinterNewsScraper";
+import { FatecNewsScraper } from "@/utils/fatecNewsScraper";
+
+export type NewsSource = "fatec" | "arinter";
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -19,9 +24,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FatecNewsScraper } from "@/utils/fatecNewsScraper";
 
-const scraper = new FatecNewsScraper();
+// helper that returns a new scraper instance for chosen source
+const createScraper = (source: NewsSource) => {
+  return source === "arinter" ? new ArinterNewsScraper() : new FatecNewsScraper();
+};
 
 const formatDate = (value?: string): string | null => {
   if (!value) return null;
@@ -71,8 +78,21 @@ const buildPaginationTokens = (currentPage: number, totalPages: number): Paginat
 const News = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialPage = parseInt(searchParams.get("page") || "1", 10) || 1;
+  const initialSource =
+    (searchParams.get("source") === "arinter" ? "arinter" : "fatec") as NewsSource;
   const [currentPage, setCurrentPage] = useState<number>(initialPage);
+  const [source, setSource] = useState<NewsSource>(initialSource);
   const isMobile = useIsMobile();
+
+  // sync params whenever source or page updates
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set("page", currentPage.toString());
+      params.set("source", source);
+      return params;
+    });
+  }, [currentPage, source, setSearchParams]);
 
   const {
     data,
@@ -81,8 +101,8 @@ const News = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["fatec-news-page", currentPage],
-    queryFn: () => scraper.scrapePage(currentPage),
+    queryKey: ["news-page", source, currentPage],
+    queryFn: () => createScraper(source).scrapePage(currentPage),
     staleTime: 1000 * 60 * 5,
     placeholderData: (previousData) => previousData,
   });
@@ -97,11 +117,7 @@ const News = () => {
   const goToPage = (page: number) => {
     const safePage = Math.max(1, Math.min(totalPages, page));
     setCurrentPage(safePage);
-    setSearchParams((prev: URLSearchParams) => {
-      const params = new URLSearchParams(prev);
-      params.set("page", safePage.toString());
-      return params;
-    });
+    // search params effect handles updating query
   };
 
   const renderPagination = () => (
@@ -179,16 +195,37 @@ const News = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-5xl mx-auto space-y-6">
-          <section className="text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5 mb-4">
-              <Newspaper className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Portal de Notícias</span>
+          <section className="text-center animate-fade-in space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5">
+                <Newspaper className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Portal de Notícias</span>
+              </div>
+
+              <div>
+                <label className="text-sm mr-2">Fonte:</label>
+                <select
+                  value={source}
+                  onChange={(e) => {
+                    const val = e.target.value as NewsSource;
+                    setSource(val);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-md border px-2 py-1"
+                >
+                  <option value="fatec">Fatec Mauá</option>
+                  <option value="arinter">ARInter</option>
+                </select>
+              </div>
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">Notícias da Fatec Mauá</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">
+              {source === "fatec" ? "Notícias da Fatec Mauá" : "Notícias da ARInter"}
+            </h2>
             <p className="text-muted-foreground text-sm md:text-base max-w-3xl mx-auto">
-              Visualizador de notícias baseado no portal oficial da Fatec Mauá, extraindo título,
-              link e descrição de cada publicação.
+              {source === "fatec"
+                ? "Visualizador de notícias baseado no portal oficial da Fatec Mauá, extraindo título, link e descrição de cada publicação."
+                : "Coletor de publicações do site da ARInter (Assessoria de Relações Internacionais)."}
             </p>
           </section>
 
@@ -268,7 +305,7 @@ const News = () => {
                         </p>
 
                         <Button asChild variant="outline">
-                          <Link to={`/noticias/${scraper.buildArticleSlug(article.link)}?page=${currentPage}`}>                            Abrir notícia
+                          <Link to={`/noticias/${createScraper(source).buildArticleSlug(article.link)}?page=${currentPage}&source=${source}`}>                            Abrir notícia
                             <ExternalLink className="h-4 w-4" />
                           </Link>
                         </Button>

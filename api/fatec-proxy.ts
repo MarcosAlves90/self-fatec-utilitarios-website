@@ -1,4 +1,9 @@
-const ALLOWED_HOSTS = new Set(["www.fatecmaua.com.br", "fatecmaua.com.br"]);
+const ALLOWED_HOSTS = new Set([
+  "www.fatecmaua.com.br",
+  "fatecmaua.com.br",
+  // for ARInter support
+  "arinter.cps.sp.gov.br",
+]);
 
 const DEFAULT_HEADERS: Record<string, string> = {
   "User-Agent":
@@ -8,6 +13,11 @@ const DEFAULT_HEADERS: Record<string, string> = {
 };
 
 export default async function handler(req: any, res: any) {
+  // allow cross-origin access from any origin (frontend will call this)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+
   if (req.method === "OPTIONS") {
     res.status(204).end();
     return;
@@ -47,6 +57,6 @@ export default async function handler(req: any, res: any) {
     res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=1800");
     res.status(upstream.status).send(responseBody);
   } catch {
-    res.status(502).json({ error: "Falha ao consultar o serviço remoto da Fatec Mauá." });
+    res.status(502).json({ error: "Falha ao consultar o serviço remoto autorizados." });
   }
 }

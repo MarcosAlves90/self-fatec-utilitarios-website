@@ -2,15 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, ExternalLink, Newspaper } from "lucide-react";
 import { Link, useParams, useLocation } from "react-router-dom";
 
+import { ArinterNewsScraper } from "@/utils/arinterNewsScraper";
+import { FatecNewsScraper } from "@/utils/fatecNewsScraper";
+import { NewsSource } from "./News";
+
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FatecNewsScraper } from "@/utils/fatecNewsScraper";
-
-const scraper = new FatecNewsScraper();
+// the actual scraper instance is created below depending on source
 
 const formatDate = (value?: string): string | null => {
   if (!value) return null;
@@ -25,6 +27,11 @@ const formatDate = (value?: string): string | null => {
 
 const NewsArticle = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const source = (query.get("source") === "arinter" ? "arinter" : "fatec") as NewsSource;
+
+  const scraper = source === "arinter" ? new ArinterNewsScraper() : new FatecNewsScraper();
 
   const sourceUrl = (() => {
     if (!slug) return "";
@@ -37,7 +44,7 @@ const NewsArticle = () => {
   })();
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["fatec-news-article", sourceUrl],
+    queryKey: ["news-article", source, sourceUrl],
     queryFn: () => scraper.scrapeArticle(sourceUrl),
     enabled: Boolean(sourceUrl),
     staleTime: 1000 * 60 * 10,
@@ -50,18 +57,30 @@ const NewsArticle = () => {
         .replace(/\s+/g, " ")
         .trim()
         .slice(0, 160)
+    : source === "arinter"
+    ? "Leitura completa de uma notícia oficial da ARInter."
     : "Leitura completa de uma notícia oficial da Fatec Mauá.";
-
-  const location = useLocation();
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-subtle">
       <SEO
-        title={data?.title ?? "Notícia da Fatec Mauá"}
-        description={seoDescription || "Leitura completa de uma notícia oficial da Fatec Mauá."}
+        title={
+          data?.title ??
+          (source === "arinter"
+            ? "Notícia da ARInter"
+            : "Notícia da Fatec Mauá")
+        }
+        description={seoDescription ||
+          (source === "arinter"
+            ? "Leitura completa de uma notícia oficial da ARInter."
+            : "Leitura completa de uma notícia oficial da Fatec Mauá.")}
         canonicalPath={slug ? `/noticias/${slug}` : "/noticias"}
         type="article"
-        keywords="notícia Fatec Mauá, comunicado acadêmico, eventos Fatec"
+        keywords={
+          source === "arinter"
+            ? "notícia ARInter, comunicado ARInter"
+            : "notícia Fatec Mauá, comunicado acadêmico, eventos Fatec"
+        }
       />
       <Header />
 

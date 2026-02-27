@@ -15,6 +15,13 @@ export default defineConfig(({ mode }) => ({
         secure: true,
         rewrite: (pathValue) => pathValue.replace(/^\/__fatec_proxy/, ""),
       },
+      // proxy for ARInter news when running in development to avoid CORS
+      "/__arinter_proxy": {
+        target: "https://arinter.cps.sp.gov.br",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (pathValue) => pathValue.replace(/^\/__arinter_proxy/, ""),
+      },
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
