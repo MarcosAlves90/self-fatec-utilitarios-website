@@ -1,41 +1,33 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GradeCalculator } from "@/components/GradeCalculator";
-import { RequiredScoreCalculator } from "@/components/RequiredScoreCalculator";
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { GradeCalculator } from "@/components/GradeCalculator";
+import { Header } from "@/components/Header";
+import { RequiredScoreCalculator } from "@/components/RequiredScoreCalculator";
 import { SEO } from "@/components/SEO";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calculator, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-subtle">
       <SEO
-        title="Calculadora de Média"
-        description="Calcule médias, veja seu status de aprovação e descubra a nota necessária para alcançar seus objetivos acadêmicos na Fatec Mauá."
-        keywords="calculadora de média, Fatec Mauá, notas, aprovação, nota necessária"
+        title="Calculadora de Media"
+        description="Calcule medias, verifique aprovacao e descubra a nota necessaria para atingir sua meta academica na Fatec Maua."
+        keywords="calculadora de media, Fatec Maua, notas, aprovacao, nota necessaria"
         canonicalPath="/"
         type="website"
       />
       <Header />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 text-center animate-fade-in">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Sistema de Cálculo de Médias
+              Sistema de Calculo de Medias
             </h2>
             <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
-              Calcule suas médias, verifique seu status de aprovação e descubra 
-              qual nota você precisa para atingir seus objetivos acadêmicos.
+              Calcule suas medias, verifique seu status de aprovacao e descubra
+              qual nota voce precisa para atingir seus objetivos academicos.
             </p>
-
-            <div className="mt-5">
-              <Button asChild variant="outline">
-                <Link to="/noticias">Ver notícias da Fatec Mauá</Link>
-              </Button>
-            </div>
           </div>
 
           <Tabs defaultValue="calculator" className="w-full">
@@ -46,7 +38,7 @@ const Index = () => {
               </TabsTrigger>
               <TabsTrigger value="required" className="flex items-center gap-2">
                 <Target className="h-4 w-4" />
-                <span>Nota Necessária</span>
+                <span>Nota Necessaria</span>
               </TabsTrigger>
             </TabsList>
 
@@ -59,32 +51,32 @@ const Index = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
-            <div className="p-4 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-2">
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3 animate-fade-in">
+            <div className="rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+              <div className="mb-2 flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-success"></div>
                 <h3 className="font-semibold">Conceito A</h3>
               </div>
-              <p className="text-2xl font-bold text-success">≥ 9.0</p>
-              <p className="text-xs text-muted-foreground mt-1">Excelente</p>
+              <p className="text-2xl font-bold text-success">{"\u2265"} 9.0</p>
+              <p className="mt-1 text-xs text-muted-foreground">Excelente</p>
             </div>
 
-            <div className="p-4 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+              <div className="mb-2 flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-primary"></div>
                 <h3 className="font-semibold">Conceito B</h3>
               </div>
-              <p className="text-2xl font-bold text-primary">≥ 7.0</p>
-              <p className="text-xs text-muted-foreground mt-1">Bom</p>
+              <p className="text-2xl font-bold text-primary">{"\u2265"} 7.0</p>
+              <p className="mt-1 text-xs text-muted-foreground">Bom</p>
             </div>
 
-            <div className="p-4 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+              <div className="mb-2 flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-warning"></div>
-                <h3 className="font-semibold">Aprovação</h3>
+                <h3 className="font-semibold">Aprovacao</h3>
               </div>
-              <p className="text-2xl font-bold text-warning">≥ 6.0</p>
-              <p className="text-xs text-muted-foreground mt-1">Média mínima</p>
+              <p className="text-2xl font-bold text-warning">{"\u2265"} 6.0</p>
+              <p className="mt-1 text-xs text-muted-foreground">Media minima</p>
             </div>
           </div>
         </div>
